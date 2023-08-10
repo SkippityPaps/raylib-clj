@@ -1,0 +1,5 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        io.github.IGJoshua/coffi {:git/tag "v0.4.341" :git/sha "09b8195"} }
+ :aliases {:dev {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}}
+                 :jvm-opts ["--add-modules=jdk.incubator.foreign" "--enable-native-access=ALL-UNNAMED"]}}}
