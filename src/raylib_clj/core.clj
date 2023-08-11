@@ -73,7 +73,7 @@
 (defcfn window-state?
   "Check if one specific window flag is enabled."
   {:arglists '([flag])}
-  "IsWindowState" [] ::mem/int)
+  "IsWindowState" [::mem/int] ::mem/int)
 
 ; void SetWindowState(unsigned int flags);
 (defcfn set-window-state
@@ -110,6 +110,7 @@
 ; void SetWindowIcon(Image image);
 (defcfn set-window-icon
   "Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)."
+  {:arglists '([image])}
   "SetWindowIcon" [::image] ::mem/void)
 
 ; void SetWindowIcons(Image *images, int count);
@@ -244,6 +245,7 @@
 ; void SetClipboardText(const char *text);
 (defcfn set-clipboard-text!
   "Set clipboard text content."
+  {:arglists '([text])}
   "SetClipboardText" [::mem/c-string] ::mem/void)
 
 ; const char *GetClipboardText(void);
@@ -303,6 +305,7 @@
 ; void ClearBackground(Color color);
 (defcfn clear-background
   "Set background color (framebuffer clear color)"
+  {:arglists '([color])}
   "ClearBackground" [#_::color] ::mem/void)
 
 ; void BeginDrawing(void);
@@ -318,6 +321,7 @@
 ; void BeginMode2D(Camera2D camera);
 (defcfn begin-mode-2d
   "Begin 2D mode with custom camera (2D)"
+  {:arglists '([camera])}
   "BeginMode2D" [#_::camera-2d] ::mem/void)
 
 ; void EndMode2D(void);
@@ -328,6 +332,7 @@
 ; void BeginMode3D(Camera3D camera);
 (defcfn begin-mode-3d
   "Begin 3D mode with custom camera (3D)"
+  {:arglists '([camera])}
   "BeginMode3D" [#_::camera-3d] ::mem/void)
 
 ; void EndMode3D(void);
@@ -338,6 +343,7 @@
 ; void BeginTextureMode(RenderTexture2D target);
 (defcfn begin-texture-mode
   "Begin drawing to render texture"
+  {:arglists '([target])}
   "BeginTextureMode" [#_(comment ::render-texture-2d)] ::mem/void)
 
 ; void EndTextureMode(void);
@@ -348,6 +354,7 @@
 ; void BeginShaderMode(Shader shader);
 (defcfn begin-shader-mode
   "Begin custom shader drawing"
+  {:arglists '([shader])}
   "BeginShaderMode" [#_::shader] ::mem/void)
 
 ; void EndShaderMode(void);
@@ -358,6 +365,7 @@
 ; void BeginBlendMode(int mode);
 (defcfn begin-blend-mode
   "Begin blending mode (alpha, additive, multiplied, subtract, custom)"
+  {:arglists '([mode])}
   "BeginBlendMode" [::mem/int] ::mem/void)
 
 ; void EndBlendMode(void);
@@ -368,6 +376,7 @@
 ; void BeginScissorMode(int x, int y, int width, int height); // 
 (defcfn begin-scissor-mode
   "Begin scissor mode (define screen area for following drawing)"
+  {:arglists '([x y width height])}
   "BeginScissorMode" [::mem/int ::mem/int ::mem/int ::mem/int] ::mem/void)
 
 ; void EndScissorMode(void);
@@ -378,6 +387,7 @@
 ; void BeginVrStereoMode(VrStereoConfig config);
 (defcfn begin-vr-stereo-mode
   "Begin stereo rendering (requires VR simulator)"
+  {:arglists '([config])}
   "BeginVrStereoMode" [#_::vr-stereo-config] ::mem/void)
 
 ; void EndVrStereoMode(void);
