@@ -1,22 +1,80 @@
 (ns raylib-clj.core
   (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [defalias]]))
+            [coffi.mem :as mem :refer [defalias]]
+            [coffi.layout :as layout]))
 
 (ffi/load-system-library "raylib")
 
+; -----------------------------------------------------------------------------
+;; Helper functions from https://github.com/IGJoshua/glfw-clj
+;; glwfw-clj/core.clj
+; -----------------------------------------------------------------------------
+(defmethod mem/primitive-type ::bool
+  [_type]
+  ::mem/int)
+
+(defmethod mem/serialize* ::bool
+  [obj _type _scope]
+  (int (if obj 1 0)))
+
+(defmethod mem/deserialize* ::bool
+  [obj _type]
+  (not (zero? obj)))
+; -----------------------------------------------------------------------------
+
 (defalias ::vector2
-  [::mem/struct
-   [[:x ::mem/float]
-    [:y ::mem/float]]])
+  (layout/with-c-layout
+    [::mem/struct
+     [[:x ::mem/float]
+      [:y ::mem/float]]]))
+
+(defalias ::vector3
+  (layout/with-c-layout
+    [::mem/struct
+     [[:x ::mem/float]
+      [:y ::mem/float]
+      [:z ::mem/float]]]))
+
+(defalias ::color
+  (layout/with-c-layout
+    [::mem/struct
+     [[:r ::mem/float]
+      [:g ::mem/float]
+      [:b ::mem/float]
+      [:a ::mem/float]]]))
 
 (defalias ::image
-  [::mem/struct
-   [[:data ::mem/pointer]
-    [:width ::mem/int]
-    [:height ::mem/int]
-    [:mipmaps ::mem/int]
-    [:format ::mem/int]]])
+  (layout/with-c-layout
+    [::mem/struct
+     [[:data    ::mem/pointer]
+      [:width   ::mem/int]
+      [:height  ::mem/int]
+      [:mipmaps ::mem/int]
+      [:format  ::mem/int]]]))
 
+(defalias ::shader
+  (layout/with-c-layout
+    [::mem/struct
+     [[:id ::mem/int]
+      [:locs [::mem/pointer ::mem/int]]]]))
+
+
+(defalias ::camera-2d
+  (layout/with-c-layout
+    [::mem/struct
+     [[:offset   ::vector2]
+      [:target   ::vector2]
+      [:rotation ::mem/float]
+      [:zoom     ::mem/float]]]))
+
+(defalias ::camera-3d
+  (layout/with-c-layout
+    [::mem/struct
+     [[:position   ::vector3]
+      [:target     ::vector3]
+      [:up         ::vector3]
+      [:fovy       ::mem/float]
+      [:projection ::mem/int]]]))
 
 ; void InitWindow(int width, int height, const char *title);  
 (defcfn init-window
@@ -27,7 +85,7 @@
 ; bool WindowShouldClose(void);
 (defcfn window-should-close?
   "Check if KEY_ESCAPE pressed or Close icon pressed."
-  "WindowShouldClose" [] ::mem/int)
+  "WindowShouldClose" [] ::bool)
 
 ; void CloseWindow(void);
 (defcfn close-window
@@ -37,43 +95,43 @@
 ; bool IsWindowReady(void);
 (defcfn window-ready?
   "Check if window has been initialized successfully."
-  "IsWindowReady" [] ::mem/int)
+  "IsWindowReady" [] ::bool)
 
 ; bool IsWindowFullscreen(void);
 (defcfn window-fullscreen?
   "Check if window is currently fullscreen."
-  "IsWindowFullscreen" [] ::mem/int)
+  "IsWindowFullscreen" [] ::bool)
 
 ; bool IsWindowHidden(void);
 (defcfn window-hidden?
   "Check if window is currently hidden (only PLATFORM_DESKTOP)."
-  "IsWindowHidden" [] ::mem/int)
+  "IsWindowHidden" [] ::bool)
 
 ; bool IsWindowMinimized(void); 
 (defcfn window-minimized?
   "Check if window is currently minimized (only PLATFORM_DESKTOP)."
-  "IsWindowMinimized" [] ::mem/int)
+  "IsWindowMinimized" [] ::bool)
 
 ; bool IsWindowMaximized(void);
 (defcfn window-maximized?
   "Check if window is currently maximized (only PLATFORM_DESKTOP)."
-  "IsWindowMaximized" [] ::mem/int)
+  "IsWindowMaximized" [] ::bool)
 
 ; bool IsWindowFocused(void); 
 (defcfn window-focused?
   "Check if window is currently focused (only PLATFORM_DESKTOP)."
-  "IsWindowFocused" [] ::mem/int)
+  "IsWindowFocused" [] ::bool)
 
 ; bool IsWindowResized(void);
 (defcfn window-resized?
   "Check if window has been resized last frame."
-  "IsWindowResized" [] ::mem/int)
+  "IsWindowResized" [] ::bool)
 
 ; bool IsWindowState(unsigned int flag);
 (defcfn window-state?
   "Check if one specific window flag is enabled."
   {:arglists '([flag])}
-  "IsWindowState" [::mem/int] ::mem/int)
+  "IsWindowState" [::mem/int] ::bool)
 
 ; void SetWindowState(unsigned int flags);
 (defcfn set-window-state
@@ -281,7 +339,7 @@
 ; bool IsCursorHidden(void);
 (defcfn cursor-hidden?
   "Check if cursor is not visible"
-  "IsCursorHidden" [] ::mem/void)
+  "IsCursorHidden" [] ::bool)
 
 ; void EnableCursor(void);
 (defcfn enable-cursor
@@ -296,7 +354,7 @@
 ; bool IsCursorOnScreen(void);
 (defcfn cursor-on-screen?
   "Check if cursor is on the screen"
-  "IsCursorOnScreen" [] ::mem/int)
+  "IsCursorOnScreen" [] ::bool)
 
 ; -----------------------------------------------------------------------------
 ;; Drawing-related functions
@@ -322,7 +380,7 @@
 (defcfn begin-mode-2d
   "Begin 2D mode with custom camera (2D)"
   {:arglists '([camera])}
-  "BeginMode2D" [#_::camera-2d] ::mem/void)
+  "BeginMode2D" [::camera-2d] ::mem/void)
 
 ; void EndMode2D(void);
 (defcfn end-mode-2d
@@ -333,7 +391,7 @@
 (defcfn begin-mode-3d
   "Begin 3D mode with custom camera (3D)"
   {:arglists '([camera])}
-  "BeginMode3D" [#_::camera-3d] ::mem/void)
+  "BeginMode3D" [::camera-3d] ::mem/void)
 
 ; void EndMode3D(void);
 (defcfn end-mode-3d
