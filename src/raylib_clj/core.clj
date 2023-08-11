@@ -38,10 +38,10 @@
 (defalias ::color
   (layout/with-c-layout
     [::mem/struct
-     [[:r ::mem/float]
-      [:g ::mem/float]
-      [:b ::mem/float]
-      [:a ::mem/float]]]))
+     [[:r ::mem/char]
+      [:g ::mem/char]
+      [:b ::mem/char]
+      [:a ::mem/char]]]))
 
 (defalias ::image
   (layout/with-c-layout
@@ -364,7 +364,7 @@
 (defcfn clear-background
   "Set background color (framebuffer clear color)"
   {:arglists '([color])}
-  "ClearBackground" [#_::color] ::mem/void)
+  "ClearBackground" [::color] ::mem/void)
 
 ; void BeginDrawing(void);
 (defcfn begin-drawing
