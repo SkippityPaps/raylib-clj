@@ -1,7 +1,8 @@
 (ns raylib-clj.core
-  (:require [coffi.ffi :as ffi :refer [defcfn]]
-            [coffi.mem :as mem :refer [defalias]]
-            [coffi.layout :as layout]))
+  (:require
+   [coffi.ffi :as ffi :refer [defcfn]]
+   [coffi.mem :as mem :refer [defalias]]
+   [coffi.layout :as layout]))
 
 (ffi/load-system-library "raylib")
 
@@ -75,6 +76,39 @@
       [:up         ::vector3]
       [:fovy       ::mem/float]
       [:projection ::mem/int]]]))
+
+; -----------------------------------------------------------------------------
+;; Raylib Color Definitions
+;; "Custom raylib color palette for amazing visuals on WHITE background "
+; -----------------------------------------------------------------------------
+
+(def ^:const ::LIGHTGRAY {:r 200 :g 200 :b 200 :a 255})
+(def ^:const ::GRAY {:r 80 :g 80 :b 80 :a 255})
+(def ^:const ::DARKGRAY {:r 200 :g 200 :b 200 :a 255})
+(def ^:const ::YELLOW {:r 253 :g 249 :b 0 :a 255})
+(def ^:const ::GOLD {:r 255 :g 203 :b 0 :a 255})
+(def ^:const ::ORANGE {:r 255 :g 161 :b 0 :a 255})
+(def ^:const ::PINK {:r 255 :g 109 :b 194 :a 255})
+(def ^:const ::RED {:r 230 :g 41 :b 55 :a 255})
+(def ^:const ::MAROON {:r 190 :g 33 :b 55 :a 255})
+(def ^:const ::GREEN {:r 0 :g 228 :b 48 :a 255})
+(def ^:const ::LIME {:r 0 :g 158 :b 47 :a 255})
+(def ^:const ::DARKGREEN {:r 0 :g 117 :b 44 :a 255})
+(def ^:const ::SKYBLUE {:r 102 :g 191 :b 255 :a 255})
+(def ^:const ::BLUE {:r 0 :g 200 :b 241 :a 255})
+(def ^:const ::DARKBLUE {:r 0 :g 82 :b 172 :a 255})
+(def ^:const ::PURPLE {:r 200 :g 122 :b 255 :a 255})
+(def ^:const ::VIOLET {:r 135 :g 60 :b 190 :a 255})
+(def ^:const ::DARKPURPLE {:r 112 :g 31 :b 126 :a 255})
+(def ^:const ::BEIGE {:r 211 :g 176 :b 131 :a 255})
+(def ^:const ::BROWN {:r 127 :g 106 :b 79 :a 255})
+(def ^:const ::DARKBROWN {:r 76 :g 63 :b 47 :a 255})
+(def ^:const ::WHITE {:r 255 :g 255 :b 255 :a 255})
+(def ^:const ::BLACK {:r 0 :g 0 :b 0 :a 255})
+(def ^:const ::BLANK {:r 0 :g 0 :b 0 :a 0})
+(def ^:const ::MAGENTA {:r 255 :g 0 :b 255 :a 255})
+(def ^:const ::RAYWHITE {:r 245 :g 245 :b 245 :a 255})
+; -----------------------------------------------------------------------------
 
 ; void InitWindow(int width, int height, const char *title);  
 (defcfn init-window
@@ -172,9 +206,9 @@
   "SetWindowIcon" [::image] ::mem/void)
 
 ; void SetWindowIcons(Image *images, int count);
-#_(ffi/defcfn set-window-icons!
-    "Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)."
-    "SetWindowIcons" [[::mem/array ::image]::mem/int] ::mem/void)
+(ffi/defcfn set-window-icons
+  "Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)."
+  "SetWindowIcons" [::mem/pointer ::mem/int] ::mem/void)
 
 
 ; void SetWindowTitle(const char *title);
@@ -279,7 +313,7 @@
   "GetMonitorPhysicalHeight" [::mem/int] ::mem/int)
 
 ; int GetMonitorRefreshRate(int monitor);
-(defcfn get-monitor-refresh-rate
+(defcfn get-monitor-refresh-rate>
   "Get specified monitor refresh rate."
   {:arglists '([monitor])}
   "GetMonitorRefreshRate" [::mem/int] ::mem/int)
@@ -328,32 +362,32 @@
 
 ; void ShowCursor(void);
 (defcfn show-cursor
-  "Shows cursor"
+  "Shows cursor."
   "ShowCursor" [] ::mem/void)
 
 ; void HideCursor(void);
 (defcfn hide-cursor
-  "Hides cursor"
+  "Hides cursor."
   "HideCursor" [] ::mem/void)
 
 ; bool IsCursorHidden(void);
 (defcfn cursor-hidden?
-  "Check if cursor is not visible"
+  "Check if cursor is not visible."
   "IsCursorHidden" [] ::bool)
 
 ; void EnableCursor(void);
 (defcfn enable-cursor
-  "Enables cursor (unlock cursor)"
+  "Enables cursor (unlock cursor)."
   "EnableCursor" [] ::mem/void)
 
 ; void DisableCursor(void);
 (defcfn disable-cursor
-  "Disables cursor (lock cursor)"
+  "Disables cursor (lock cursor)."
   "DisableCursor" [] ::mem/void)
 
 ; bool IsCursorOnScreen(void);
 (defcfn cursor-on-screen?
-  "Check if cursor is on the screen"
+  "Check if cursor is on the screen."
   "IsCursorOnScreen" [] ::bool)
 
 ; -----------------------------------------------------------------------------
@@ -362,93 +396,93 @@
 
 ; void ClearBackground(Color color);
 (defcfn clear-background
-  "Set background color (framebuffer clear color)"
+  "Set background color (framebuffer clear color)."
   {:arglists '([color])}
   "ClearBackground" [::color] ::mem/void)
 
 ; void BeginDrawing(void);
 (defcfn begin-drawing
-  "Setup canvas (framebuffer) to start drawing"
+  "Setup canvas (framebuffer) to start drawing."
   "BeginDrawing" [] ::mem/void)
 
 ; void EndDrawing(void);
 (defcfn end-drawing
-  "End canvas drawing and swap buffers (double buffering)"
+  "End canvas drawing and swap buffers (double buffering)."
   "EndDrawing" [] ::mem/void)
 
 ; void BeginMode2D(Camera2D camera);
 (defcfn begin-mode-2d
-  "Begin 2D mode with custom camera (2D)"
+  "Begin 2D mode with custom camera (2D)."
   {:arglists '([camera])}
   "BeginMode2D" [::camera-2d] ::mem/void)
 
 ; void EndMode2D(void);
 (defcfn end-mode-2d
-  "Ends 2D mode with custom camera"
+  "Ends 2D mode with custom camera."
   "EndMode2D" [] ::mem/void)
 
 ; void BeginMode3D(Camera3D camera);
 (defcfn begin-mode-3d
-  "Begin 3D mode with custom camera (3D)"
+  "Begin 3D mode with custom camera (3D)."
   {:arglists '([camera])}
   "BeginMode3D" [::camera-3d] ::mem/void)
 
 ; void EndMode3D(void);
 (defcfn end-mode-3d
-  "Ends 3D mode and returns to default 2D orthographic mode"
+  "Ends 3D mode and returns to default 2D orthographic mode."
   "EndMode3D" [] ::mem/void)
 
 ; void BeginTextureMode(RenderTexture2D target);
 (defcfn begin-texture-mode
-  "Begin drawing to render texture"
+  "Begin drawing to render texture."
   {:arglists '([target])}
   "BeginTextureMode" [#_(comment ::render-texture-2d)] ::mem/void)
 
 ; void EndTextureMode(void);
 (defcfn end-texture-mode
-  "Ends drawing to render texture"
+  "Ends drawing to render texture."
   "EndTextureMode" [] ::mem/void)
 
 ; void BeginShaderMode(Shader shader);
 (defcfn begin-shader-mode
-  "Begin custom shader drawing"
+  "Begin custom shader drawing."
   {:arglists '([shader])}
-  "BeginShaderMode" [#_::shader] ::mem/void)
+  "BeginShaderMode" [::shader] ::mem/void)
 
 ; void EndShaderMode(void);
 (defcfn end-shader-mode
-  "End custom shader drawing (use default shader)"
+  "End custom shader drawing (use default shader)."
   "EndShaderMode" [] ::mem/void)
 
 ; void BeginBlendMode(int mode);
 (defcfn begin-blend-mode
-  "Begin blending mode (alpha, additive, multiplied, subtract, custom)"
+  "Begin blending mode (alpha, additive, multiplied, subtract, custom)."
   {:arglists '([mode])}
   "BeginBlendMode" [::mem/int] ::mem/void)
 
 ; void EndBlendMode(void);
 (defcfn end-blend-mode
-  "End blending mode (reset to default: alpha blending)"
+  "End blending mode (reset to default: alpha blending)."
   "EndBlendMode" [] ::mem/void)
 
 ; void BeginScissorMode(int x, int y, int width, int height); // 
 (defcfn begin-scissor-mode
-  "Begin scissor mode (define screen area for following drawing)"
+  "Begin scissor mode (define screen area for following drawing)."
   {:arglists '([x y width height])}
   "BeginScissorMode" [::mem/int ::mem/int ::mem/int ::mem/int] ::mem/void)
 
 ; void EndScissorMode(void);
 (defcfn end-scissor-mode
-  "End scissor mode"
+  "End scissor mode."
   "EndScissorMode" [] ::mem/void)
 
 ; void BeginVrStereoMode(VrStereoConfig config);
 (defcfn begin-vr-stereo-mode
-  "Begin stereo rendering (requires VR simulator)"
+  "Begin stereo rendering (requires VR simulator)."
   {:arglists '([config])}
   "BeginVrStereoMode" [#_::vr-stereo-config] ::mem/void)
 
 ; void EndVrStereoMode(void);
 (defcfn end-vr-stereo-mode
-  "End stereo rendering (requires VR simulator)"
+  "End stereo rendering (requires VR simulator)."
   "EndVrStereoMode" [] ::mem/void)
