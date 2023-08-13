@@ -1,7 +1,7 @@
 (ns raylib-clj.core
   (:require
    [coffi.ffi :as ffi :refer [defcfn]]
-   [coffi.mem :as mem :refer [defalias]]
+   [coffi.mem :as mem :refer [defalias defstructs]]
    [coffi.layout :as layout]))
 
 (ffi/load-system-library "raylib")
@@ -23,59 +23,108 @@
   (not (zero? obj)))
 ; -----------------------------------------------------------------------------
 
-(defalias ::vector2
-  (layout/with-c-layout
-    [::mem/struct
-     [[:x ::mem/float]
-      [:y ::mem/float]]]))
+(defmacro defstruct
+  [new-type aliased-types]
+  `(defalias ~new-type [:coffi.mem/struct ~aliased-types]))
 
-(defalias ::vector3
-  (layout/with-c-layout
-    [::mem/struct
-     [[:x ::mem/float]
-      [:y ::mem/float]
-      [:z ::mem/float]]]))
+(defmacro defstruct
+  "Defines a type alias from `new-type` to a struct composed of `aliased-types`.
+   
+   (defstruct ::point [[:x ::mem/int] [:y ::mem/int]]) is equivalent to 
+   (defalias ::point [::mem/struct [[:x ::mem/int] [:y ::mem/int]]])."
+  {:style/indent [:defmacro]}
+  [new-type aliased-types]
+  `(defalias ~new-type [::struct [~@aliased-types]]))
 
-(defalias ::color
-  (layout/with-c-layout
-    [::mem/struct
-     [[:r ::mem/char]
-      [:g ::mem/char]
-      [:b ::mem/char]
-      [:a ::mem/char]]]))
+(defstruct ::vector2
+  [[:x ::mem/float]
+   [:y ::mem/float]])
 
-(defalias ::image
-  (layout/with-c-layout
-    [::mem/struct
-     [[:data    ::mem/pointer]
-      [:width   ::mem/int]
-      [:height  ::mem/int]
-      [:mipmaps ::mem/int]
-      [:format  ::mem/int]]]))
+(defstruct ::vector3 
+  [[:x ::mem/float]
+   [:y ::mem/float]
+   [:z ::mem/float]])
 
-(defalias ::shader
-  (layout/with-c-layout
-    [::mem/struct
-     [[:id ::mem/int]
-      [:locs [::mem/pointer ::mem/int]]]]))
+(defstruct ::vector4 
+  [[:x ::mem/float]
+   [:y ::mem/float]
+   [:z ::mem/float]
+   [:w ::mem/float]])
+
+(defalias ::quaternion ::vector4)
+
+; Matrix, 4x4 components, column major, OpenGL style, right-handed.
+(defstruct ::matrix 
+  [[:m0 ::mem/float] [:m4 ::mem/float] [:m8  ::mem/float] [:m12 ::mem/float]
+   [:m1 ::mem/float] [:m5 ::mem/float] [:m9  ::mem/float] [:m13 ::mem/float]
+   [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
+   [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float] [:m15 ::mem/float]])
+
+; Color, 4 components, R8G8B8A8 (32bit).
+(defstruct ::color 
+  [[:r ::mem/char]
+   [:g ::mem/char]
+   [:b ::mem/char]
+   [:a ::mem/char]])
+
+(defstruct ::rectangle 
+  [[:x      ::mem/float]
+   [:y      ::mem/float]
+   [:width  ::mem/float]
+   [:height ::mem/float]])
+
+; Image, pixel data stored in CPU memory (RAM).
+(defstruct ::image
+  [[:data    ::mem/pointer]
+   [:width   ::mem/int]
+   [:height  ::mem/int]
+   [:mipmaps ::mem/int]
+   [:format  ::mem/int]])
+
+; Texture, tex data stored in GPU memory (VRAM).
+(defstruct ::texture 
+  [[:id      ::mem/int]
+   [:width   ::mem/int]
+   [:height  ::mem/int]
+   [:mipmaps ::mem/int]
+   [:format  ::mem/int]])
+
+(defalias ::texture-2d ::texture)
+(defalias ::texture-cubemap ::texture)
+
+; RenderTexture, fbo for texture rendering
+(defstruct ::render-texture 
+  [[:id      ::mem/int]
+   [:texture ::texture]
+   [:depth   ::texture]])
+
+(defalias ::render-texture-2d ::render-texture)
+
+(defstruct ::n-patch-info 
+   [[:source ::rectangle]
+    [:left   ::mem/int]
+    [:top    ::mem/int]
+    [:right  ::mem/int]
+    [:bottom ::mem/int]
+    [:layout ::mem/int]])
+
+(defstruct ::shader 
+  [[:id   ::mem/int]
+   [:locs ::mem/pointer]])
 
 
-(defalias ::camera-2d
-  (layout/with-c-layout
-    [::mem/struct
-     [[:offset   ::vector2]
-      [:target   ::vector2]
-      [:rotation ::mem/float]
-      [:zoom     ::mem/float]]]))
+(defstruct ::camera-2d 
+  [[:offset   ::vector2]
+   [:target   ::vector2]
+   [:rotation ::mem/float]
+   [:zoom     ::mem/float]])
 
-(defalias ::camera-3d
-  (layout/with-c-layout
-    [::mem/struct
-     [[:position   ::vector3]
-      [:target     ::vector3]
-      [:up         ::vector3]
-      [:fovy       ::mem/float]
-      [:projection ::mem/int]]]))
+(defstruct ::camera-3d 
+  [[:position   ::vector3]
+   [:target     ::vector3]
+   [:up         ::vector3]
+   [:fovy       ::mem/float]
+   [:projection ::mem/int]])
 
 ; -----------------------------------------------------------------------------
 ;; Raylib Color Definitions
