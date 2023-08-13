@@ -6,10 +6,10 @@
 
 (ffi/load-system-library "raylib")
 
-; -----------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Helper functions from https://github.com/IGJoshua/glfw-clj
 ;; glwfw-clj/core.clj
-; -----------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 (defmethod mem/primitive-type ::bool
   [_type]
   ::mem/int)
@@ -21,20 +21,11 @@
 (defmethod mem/deserialize* ::bool
   [obj _type]
   (not (zero? obj)))
-; -----------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 (defmacro defstruct
   [new-type aliased-types]
   `(defalias ~new-type [:coffi.mem/struct ~aliased-types]))
-
-(defmacro defstruct
-  "Defines a type alias from `new-type` to a struct composed of `aliased-types`.
-   
-   (defstruct ::point [[:x ::mem/int] [:y ::mem/int]]) is equivalent to 
-   (defalias ::point [::mem/struct [[:x ::mem/int] [:y ::mem/int]]])."
-  {:style/indent [:defmacro]}
-  [new-type aliased-types]
-  `(defalias ~new-type [::struct [~@aliased-types]]))
 
 (defstruct ::vector2
   [[:x ::mem/float]
@@ -100,6 +91,7 @@
 
 (defalias ::render-texture-2d ::render-texture)
 
+; NPatchInfo, n-patch layout info
 (defstruct ::n-patch-info 
    [[:source ::rectangle]
     [:left   ::mem/int]
@@ -108,10 +100,22 @@
     [:bottom ::mem/int]
     [:layout ::mem/int]])
 
-(defstruct ::shader 
-  [[:id   ::mem/int]
-   [:locs ::mem/pointer]])
+; GlyphInfo, font characters glyphs info 
+(defstruct ::glyph-info
+  [[:value     ::mem/int]
+   [:offset-x  ::mem/int]
+   [:offset-y  ::mem/int]
+   [:advance-x ::mem/int]
+   [:image     ::image]])
 
+; Font, font texture and GlyphInfo array data
+(defstruct ::font
+  [[:base-size     ::mem/int]
+   [:glyph-count   ::mem/int]
+   [:glyph-padding ::mem/int]
+   [:texture       ::texture-2d]
+   [:recs          ::mem/pointer]
+   [:glyphs        ::mem/pointer]])
 
 (defstruct ::camera-2d 
   [[:offset   ::vector2]
@@ -126,10 +130,146 @@
    [:fovy       ::mem/float]
    [:projection ::mem/int]])
 
-; -----------------------------------------------------------------------------
+(defalias ::camera ::camera-3d)
+
+(comment (defstruct ::mesh
+           [
+   ; number of vertices stored in arrays
+            [:vertex-count   ::mem/int]
+
+   ; number of triangles stored (indexed or not)
+            [:triangle-count ::mem/int]
+
+   ; Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+            [:vertices       ::mem/pointer]
+
+   ; Vertex texture coordinates (UV - 2 components per vertex) 
+   ; (shader-location = 1)
+            [:tex-coords     ::mem/pointer]
+
+   ; Vertex texture second coordinates (UV - 2 components per vertex) 
+   ; (shader-location = 5)
+            [:tex-coords2    ::mem/pointer]
+
+   ; Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+            [:normals        ::mem/pointer]
+
+   ; Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+            [:tangents       ::mem/pointer]
+
+   ; Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+            [:colors         ::mem/pointer]
+
+   ; Vertex indices (in case vertex data comes indexed)
+            [:indices        ::mem/pointer]
+
+   ; Animated vertex positions (after bones transformations)
+            [:anim-vertices  ::mem/pointer]
+
+   ; Animated normals (after bones transformations)
+            [:anim-normals   ::mem/pointer]
+
+   ; Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex 
+   ; (skinning)
+            [:bone-ids       ::mem/pointer]
+
+   ; Vertex bone weight, up to 4 bones influence by vertex (skinning)
+            [:bone-weights   ::mem/pointer]
+            
+   ; OpenGL Vertex Array Object id
+            [:vao-id         ::mem/int]
+
+   ; OpenGL Vertex Buffer Objects id (default vertex data)
+            [:vbo-id         ::mem/pointer]])
+         )
+
+(defstruct ::mesh
+  [[:vertex-count   ::mem/int]
+   [:triangle-count ::mem/int]
+   [:vertices       ::mem/pointer] ; float *
+   [:tex-coords     ::mem/pointer] ; float *
+   [:tex-coords2    ::mem/pointer] ; float * 
+   [:normals        ::mem/pointer] ; float *
+   [:tangents       ::mem/pointer] ; float *
+   [:colors         ::mem/pointer] ; unsigned char *
+   [:indices        ::mem/pointer] ; unsigned short *
+   [:anim-vertices  ::mem/pointer] ; float *
+   [:anim-normals   ::mem/pointer] ; float *
+   [:bone-ids       ::mem/pointer] ; unsigned char *
+   [:bone-weights   ::mem/pointer] ; float *
+   [:vao-id         ::mem/int]
+   [:vbo-id         ::mem/pointer] ; unsigned int *
+   ])
+
+(defstruct ::shader 
+  [[:id   ::mem/int]
+   [:locs ::mem/pointer] ; int *
+   ])
+
+(defstruct ::material-map
+  [[:texture ::texture-2d]
+   [:color   ::color]
+   [:value   ::mem/float]])
+
+(defstruct ::material
+  [[:shader ::shader]
+   [:maps   ::mem/pointer] ; MaterialMap *
+   [:params [::mem/array ::mem/float 4]]])
+
+(defstruct ::transform
+  [[:translation ::vector3]
+   [:rotation    ::quaternion]
+   [:scale       ::vector3]])
+
+(defstruct ::bone-info
+  [[:name   [::mem/array ::mem/char 32]]
+   [:parent ::mem/int]])
+
+(defstruct ::model
+  [[:transform ::matrix]
+   [:mesh-count ::mem/int]
+   [:matrerial-count ::mem/int]
+   [:meshes ::mem/pointer] ; Mesh *
+   [:materials ::mem/pointer] ; Material *
+   [:mesh-materials ::mem/pointer] ; int *
+   [:bone-count ::mem/int]
+   [:bones ::mem/pointer] ; BoneInfo *
+   [:bind-pose ::mem/pointer] ; Transform *
+   ])
+
+(defstruct ::model-animation
+  [[:bone-count        ::mem/int]
+   [:frame-count       ::mem/int]
+   [:bones             ::mem/pointer] ; BoneInfo *
+   [:frame-poses       ::mem/pointer] ; Transform **
+   [:name [::mem/array ::mem/char 32]]])
+
+(defstruct ::ray
+  [[:position  ::vector3]
+   [:direction ::vector3]])
+
+(defstruct ::ray-collision
+  [[:hit ::bool]
+   [:distance ::mem/float]
+   [:point ::vector3]
+   [:normal ::vector3]])
+
+(defstruct ::bounding-box
+  [[:min ::vector3]
+   [:max ::vector3]])
+
+(defstruct ::wave
+  [[:frame-count ::mem/int]
+   [:sample-rate ::mem/int]
+   [:sample-size ::mem/int]
+   [:channels    ::mem/int]
+   [:data        ::mem/pointer] ; void *
+   ])
+
+;;------------------------------------------------------------------------------
 ;; Raylib Color Definitions
 ;; "Custom raylib color palette for amazing visuals on WHITE background "
-; -----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 
 (def ^:const ::light-gray {:r 200 :g 200 :b 200 :a 255})
 (def ^:const ::gray {:r 80 :g 80 :b 80 :a 255})
@@ -157,7 +297,10 @@
 (def ^:const ::blank {:r 0 :g 0 :b 0 :a 0})
 (def ^:const ::magenta {:r 255 :g 0 :b 255 :a 255})
 (def ^:const ::ray-white {:r 245 :g 245 :b 245 :a 255})
-; -----------------------------------------------------------------------------
+
+;;------------------------------------------------------------------------------
+;; Window-related Functions
+;;------------------------------------------------------------------------------
 
 ; void InitWindow(int width, int height, const char *title);  
 (defcfn init-window!
@@ -405,9 +548,9 @@
   "DisableEventWaiting" [] ::mem/void)
 
 
-; -----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 ;; Cursor-related functions
-; -----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 
 ; void ShowCursor(void);
 (defcfn show-cursor
@@ -439,9 +582,9 @@
   "Check if cursor is on the screen."
   "IsCursorOnScreen" [] ::bool)
 
-; -----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 ;; Drawing-related functions
-; -----------------------------------------------------------------------------
+;;------------------------------------------------------------------------------
 
 ; void ClearBackground(Color color);
 (defcfn clear-background
