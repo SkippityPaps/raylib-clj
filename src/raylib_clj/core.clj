@@ -1,7 +1,8 @@
 (ns raylib-clj.core
   (:require
+   [clojure.spec.alpha :as s]
    [coffi.ffi :as ffi :refer [defcfn]]
-   [coffi.mem :as mem :refer [defalias defstructs]]
+   [coffi.mem :as mem :refer [defalias]]
    [coffi.layout :as layout]))
 
 (ffi/load-system-library "raylib")
@@ -26,17 +27,22 @@
 (defmacro defstruct
   [new-type aliased-types]
   `(defalias ~new-type [:coffi.mem/struct ~aliased-types]))
+(s/fdef defstruct
+  :args (s/cat :new-type qualified-keyword?
+               :aliased-types (s/coll-of
+                               (s/tuple keyword? any?)
+                               :min-count 1)))
 
 (defstruct ::vector2
   [[:x ::mem/float]
    [:y ::mem/float]])
 
-(defstruct ::vector3 
+(defstruct ::vector3
   [[:x ::mem/float]
    [:y ::mem/float]
    [:z ::mem/float]])
 
-(defstruct ::vector4 
+(defstruct ::vector4
   [[:x ::mem/float]
    [:y ::mem/float]
    [:z ::mem/float]
@@ -45,20 +51,20 @@
 (defalias ::quaternion ::vector4)
 
 ; Matrix, 4x4 components, column major, OpenGL style, right-handed.
-(defstruct ::matrix 
+(defstruct ::matrix
   [[:m0 ::mem/float] [:m4 ::mem/float] [:m8  ::mem/float] [:m12 ::mem/float]
    [:m1 ::mem/float] [:m5 ::mem/float] [:m9  ::mem/float] [:m13 ::mem/float]
    [:m2 ::mem/float] [:m6 ::mem/float] [:m10 ::mem/float] [:m14 ::mem/float]
    [:m3 ::mem/float] [:m7 ::mem/float] [:m11 ::mem/float] [:m15 ::mem/float]])
 
 ; Color, 4 components, R8G8B8A8 (32bit).
-(defstruct ::color 
+(defstruct ::color
   [[:r ::mem/char]
    [:g ::mem/char]
    [:b ::mem/char]
    [:a ::mem/char]])
 
-(defstruct ::rectangle 
+(defstruct ::rectangle
   [[:x      ::mem/float]
    [:y      ::mem/float]
    [:width  ::mem/float]
@@ -73,7 +79,7 @@
    [:format  ::mem/int]])
 
 ; Texture, tex data stored in GPU memory (VRAM).
-(defstruct ::texture 
+(defstruct ::texture
   [[:id      ::mem/int]
    [:width   ::mem/int]
    [:height  ::mem/int]
@@ -84,7 +90,7 @@
 (defalias ::texture-cubemap ::texture)
 
 ; RenderTexture, fbo for texture rendering
-(defstruct ::render-texture 
+(defstruct ::render-texture
   [[:id      ::mem/int]
    [:texture ::texture]
    [:depth   ::texture]])
@@ -92,13 +98,13 @@
 (defalias ::render-texture-2d ::render-texture)
 
 ; NPatchInfo, n-patch layout info
-(defstruct ::n-patch-info 
-   [[:source ::rectangle]
-    [:left   ::mem/int]
-    [:top    ::mem/int]
-    [:right  ::mem/int]
-    [:bottom ::mem/int]
-    [:layout ::mem/int]])
+(defstruct ::n-patch-info
+  [[:source ::rectangle]
+   [:left   ::mem/int]
+   [:top    ::mem/int]
+   [:right  ::mem/int]
+   [:bottom ::mem/int]
+   [:layout ::mem/int]])
 
 ; GlyphInfo, font characters glyphs info 
 (defstruct ::glyph-info
@@ -117,13 +123,13 @@
    [:recs          ::mem/pointer]
    [:glyphs        ::mem/pointer]])
 
-(defstruct ::camera-2d 
+(defstruct ::camera-2d
   [[:offset   ::vector2]
    [:target   ::vector2]
    [:rotation ::mem/float]
    [:zoom     ::mem/float]])
 
-(defstruct ::camera-3d 
+(defstruct ::camera-3d
   [[:position   ::vector3]
    [:target     ::vector3]
    [:up         ::vector3]
@@ -133,8 +139,7 @@
 (defalias ::camera ::camera-3d)
 
 (comment (defstruct ::mesh
-           [
-   ; number of vertices stored in arrays
+           [; number of vertices stored in arrays
             [:vertex-count   ::mem/int]
 
    ; number of triangles stored (indexed or not)
@@ -143,8 +148,7 @@
    ; Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
             [:vertices       ::mem/pointer]
 
-   ; Vertex texture coordinates (UV - 2 components per vertex) 
-   ; (shader-location = 1)
+   ; Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
             [:tex-coords     ::mem/pointer]
 
    ; Vertex texture second coordinates (UV - 2 components per vertex) 
@@ -175,13 +179,12 @@
 
    ; Vertex bone weight, up to 4 bones influence by vertex (skinning)
             [:bone-weights   ::mem/pointer]
-            
+
    ; OpenGL Vertex Array Object id
             [:vao-id         ::mem/int]
 
    ; OpenGL Vertex Buffer Objects id (default vertex data)
-            [:vbo-id         ::mem/pointer]])
-         )
+            [:vbo-id         ::mem/pointer]]))
 
 (defstruct ::mesh
   [[:vertex-count   ::mem/int]
@@ -201,7 +204,7 @@
    [:vbo-id         ::mem/pointer] ; unsigned int *
    ])
 
-(defstruct ::shader 
+(defstruct ::shader
   [[:id   ::mem/int]
    [:locs ::mem/pointer] ; int *
    ])
@@ -271,33 +274,32 @@
 ;; "Custom raylib color palette for amazing visuals on WHITE background "
 ;;------------------------------------------------------------------------------
 
-(def ^:const ::light-gray {:r 200 :g 200 :b 200 :a 255})
-(def ^:const ::gray {:r 80 :g 80 :b 80 :a 255})
-(def ^:const ::dark-gray {:r 200 :g 200 :b 200 :a 255})
-(def ^:const ::yellow {:r 253 :g 249 :b 0 :a 255})
-(def ^:const ::gold {:r 255 :g 203 :b 0 :a 255})
-(def ^:const ::orange {:r 255 :g 161 :b 0 :a 255})
-(def ^:const ::pink {:r 255 :g 109 :b 194 :a 255})
-(def ^:const ::red {:r 230 :g 41 :b 55 :a 255})
-(def ^:const ::maroon {:r 190 :g 33 :b 55 :a 255})
-(def ^:const ::green {:r 0 :g 228 :b 48 :a 255})
-(def ^:const ::lime {:r 0 :g 158 :b 47 :a 255})
-(def ^:const ::dark-green {:r 0 :g 117 :b 44 :a 255})
-(def ^:const ::sky-blue {:r 102 :g 191 :b 255 :a 255})
-(def ^:const ::blue {:r 0 :g 200 :b 241 :a 255})
-(def ^:const ::dark-blue {:r 0 :g 82 :b 172 :a 255})
-(def ^:const ::purple {:r 200 :g 122 :b 255 :a 255})
-(def ^:const ::violet {:r 135 :g 60 :b 190 :a 255})
-(def ^:const ::dark-purple {:r 112 :g 31 :b 126 :a 255})
-(def ^:const ::beige {:r 211 :g 176 :b 131 :a 255})
-(def ^:const ::brown {:r 127 :g 106 :b 79 :a 255})
-(def ^:const ::dark-brown {:r 76 :g 63 :b 47 :a 255})
-(def ^:const ::white {:r 255 :g 255 :b 255 :a 255})
-(def ^:const ::black {:r 0 :g 0 :b 0 :a 255})
-(def ^:const ::blank {:r 0 :g 0 :b 0 :a 0})
-(def ^:const ::magenta {:r 255 :g 0 :b 255 :a 255})
-(def ^:const ::ray-white {:r 245 :g 245 :b 245 :a 255})
-
+(def light-gray {:r 200 :g 200 :b 200 :a 255})
+(def gray {:r 80 :g 80 :b 80 :a 255})
+(def dark-gray {:r 200 :g 200 :b 200 :a 255})
+(def yellow {:r 253 :g 249 :b 0 :a 255})
+(def gold {:r 255 :g 203 :b 0 :a 255})
+(def orange {:r 255 :g 161 :b 0 :a 255})
+(def pink {:r 255 :g 109 :b 194 :a 255})
+(def red {:r 230 :g 41 :b 55 :a 255})
+(def maroon {:r 190 :g 33 :b 55 :a 255})
+(def green {:r 0 :g 228 :b 48 :a 255})
+(def lime {:r 0 :g 158 :b 47 :a 255})
+(def dark-green {:r 0 :g 117 :b 44 :a 255})
+(def sky-blue {:r 102 :g 191 :b 255 :a 255})
+(def blue {:r 0 :g 200 :b 241 :a 255})
+(def dark-blue {:r 0 :g 82 :b 172 :a 255})
+(def purple {:r 200 :g 122 :b 255 :a 255})
+(def violet {:r 135 :g 60 :b 190 :a 255})
+(def dark-purple {:r 112 :g 31 :b 126 :a 255})
+(def beige {:r 211 :g 176 :b 131 :a 255})
+(def brown {:r 127 :g 106 :b 79 :a 255})
+(def dark-brown {:r 76 :g 63 :b 47 :a 255})
+(def white {:r 255 :g 255 :b 255 :a 255})
+(def black {:r 0 :g 0 :b 0 :a 255})
+(def blank {:r 0 :g 0 :b 0 :a 0})
+(def magenta {:r 255 :g 0 :b 255 :a 255})
+(def ray-white {:r 245 :g 245 :b 245 :a 255})
 ;;------------------------------------------------------------------------------
 ;; Window-related Functions
 ;;------------------------------------------------------------------------------
@@ -398,10 +400,9 @@
   "SetWindowIcon" [::image] ::mem/void)
 
 ; void SetWindowIcons(Image *images, int count);
-(ffi/defcfn set-window-icons
+(defcfn set-window-icons
   "Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)."
   "SetWindowIcons" [::mem/pointer ::mem/int] ::mem/void)
-
 
 ; void SetWindowTitle(const char *title);
 (defcfn set-window-title
@@ -547,7 +548,6 @@
   "Disable waiting for events on EndDrawing(), automatic events polling."
   "DisableEventWaiting" [] ::mem/void)
 
-
 ;;------------------------------------------------------------------------------
 ;; Cursor-related functions
 ;;------------------------------------------------------------------------------
@@ -678,3 +678,212 @@
 (defcfn end-vr-stereo-mode
   "End stereo rendering (requires VR simulator)."
   "EndVrStereoMode" [] ::mem/void)
+
+; bool IsKeyPressed(int key);
+(defcfn key-pressed?
+  "Check if a key has been pressed once."
+  {:arglists '([key])}
+  "IsKeyPressed" [::mem/int] ::bool)
+
+; bool IsKeyDown(int key);
+(defcfn key-down?
+  "Check if a key is being pressed."
+  {:arglists '([key])}
+  "IsKeyDown" [::mem/int] ::bool)
+
+; bool IsKeyReleased(int key);
+(defcfn key-released?
+  "Check if a key has been released once."
+  {:arglists '([key])}
+  "IsKeyReleased" [::mem/int] ::bool)
+
+; bool IsKeyUp(int key);
+(defcfn key-up?
+  "Check if a key is NOT being pressed."
+  {:arglists '([key])}
+  "IsKeyUp" [::mem/int] ::bool)
+
+; void SetExitKey(int key);
+(defcfn set-exit-key
+  "Set a custom key to exit program (default is ESC)."
+  {:arglists '([key])}
+  "SetExitKey" [::mem/int] ::mem/void)
+
+; int GetKeyPressed(void);
+(defcfn get-key-pressed
+  "Get key pressed (keycode), call it multiple times for keys queued, returns 0 
+   when the queue is empty."
+  "GetKeyPressed" [] ::mem/int)
+
+; int GetCharPressed(void);
+(defcfn get-char-pressed
+  "Get char pressed (unicode), call it multiple times for chars queued, returns 
+   0 when the queue is empty."
+  "GetCharPressed" [] ::mem/int)
+
+; // Input-related functions: gamepads
+; bool IsGamepadAvailable(int gamepad);
+(defcfn gamepad-available?
+  "Check if a gamepad is available."
+  {:arglists '([gamepad])}
+  "IsGamepadAvailable" [::mem/int] ::bool)
+
+; const char *GetGamepadName(int gamepad);
+(defcfn get-gamepad-name
+  "Get gamepad internal name id."
+  {:arglists '([gamepad])}
+  "GetGamepadName" [::mem/int] ::mem/c-string)
+
+; bool IsGamepadButtonPressed(int gamepad, int button);
+(defcfn gamepad-button-pressed?
+  "Check if a gamepad button has been pressed once."
+  {:arglists '([gamepad button])}
+  "IsGamepadButtonPressed" [::mem/int ::mem/int] ::bool)
+
+; bool IsGamepadButtonDown(int gamepad, int button);
+(defcfn gamepad-button-down?
+  "Check if a gamepad button is being pressed."
+  {:arglists '([gamepad button])}
+  "IsGamepadButtonDown" [] ::bool)
+
+; bool IsGamepadButtonReleased(int gamepad, int button);
+(defcfn gamepad-button-released?
+  "Check if a gamepad button has been released once."
+  {:arglists '([gamepad button])}
+  "IsGamepadButtonReleased" [] ::bool)
+
+; bool IsGamepadButtonUp(int gamepad, int button);
+(defcfn gamepad-button-up?
+  "Check if a gamepad button is NOT being pressed."
+  {:arglists '([gamepad button])}
+  "IsGamepadButtonUp" [] ::bool)
+
+; int GetGamepadButtonPressed(void);
+(defcfn get-gamepad-button-pressed
+  "Get the last gamepad button pressed."
+  "GetGamepadButtonPressed" [] ::mem/int)
+
+; int GetGamepadAxisCount(int gamepad);
+(defcfn get-gamepad-axis-count
+  "Get gamepad axis count for a gamepad."
+  {:arglists '([gamepad])}
+  "GetGamepadAxisCount" [::mem/int] ::mem/int)
+
+; float GetGamepadAxisMovement(int gamepad, int axis);
+(defcfn get-gamepad-axis-movement
+  "Get axis movement value for a gamepad axis."
+  {:arglists '([gamepad axis])}
+  "GetGamepadAxisMovement" [::mem/int ::mem/int] ::mem/float)
+
+; int SetGamepadMappings(const char *mappings);
+(defcfn set-gamepad-mappings
+  "Set internal gamepad mappings (SDL_GameControllerDB)."
+  {:arglists '([mappings])}
+  "SetGamepadMappings" [::mem/c-string] ::mem/int)
+
+; // Input-related functions: mouse
+; bool IsMouseButtonPressed(int button);
+(defcfn mouse-button-pressed?
+  "Check if a mouse button has been pressed once."
+  {:arglists '([button])}
+  "IsMouseButtonPressed" [::mem/int] ::bool)
+
+; bool IsMouseButtonDown(int button);
+(defcfn mouse-button-down?
+  "Check if a mouse button is being pressed."
+  {:arglists '([button])}
+  "IsMouseButtonDown" [::mem/int] ::bool)
+
+; bool IsMouseButtonReleased(int button);
+(defcfn mouse-button-released?
+  "Check if a mouse button has been released once."
+  {:arglists '([button])}
+  "IsMouseButtonReleased" [::mem/int] ::bool)
+
+; bool IsMouseButtonUp(int button);
+(defcfn mouse-button-up?
+  "Check if a mouse button is NOT being pressed."
+  {:arglists '([button])}
+  "IsMouseButtonUp" [::mem/int] ::bool)
+
+; int GetMouseX(void);
+(defcfn get-mouse-x
+  "Get mouse position X."
+  "GetMouseX" [] ::mem/int)
+
+; int GetMouseY(void);
+(defcfn get-mouse-y
+  "Get mouse position Y."
+  "GetMouseY" [] ::mem/int)
+
+; Vector2 GetMousePosition(void);
+(defcfn get-mouse-position
+  "Get mouse position XY."
+  "GetMousePosition" [] ::vector2)
+
+; Vector2 GetMouseDelta(void);
+(defcfn get-mouse-delta
+  "Get mouse delta between frames."
+  "GetMouseDelta" [] ::mem/void)
+
+; void SetMousePosition(int x, int y);
+(defcfn set-mouse-position
+  "Set mouse position XY."
+  {:arglists '([x y])}
+  "SetMousePosition" [::mem/int ::mem/int] ::mem/void)
+
+; void SetMouseOffset(int offsetX, int offsetY);
+(defcfn set-mouse-offset
+  "Set mouse offset."
+  {:arglists '([offset-x offset-y])}
+  "SetMouseOffset" [::mem/int ::mem/int] ::mem/void)
+
+; void SetMouseScale(float scaleX, float scaleY);
+(defcfn set-mouse-scale
+  "Set mouse scaling."
+  {:arglists '([scale-x scale-y])}
+  "SetMouseScale" [::mem/float ::mem/float] ::mem/void)
+
+; float GetMouseWheelMove(void);
+(defcfn get-mouse-wheel-move
+  "Get mouse wheel movement for X or Y, whichever is larger."
+  "GetMouseWheelMove" [] ::mem/float)
+
+; Vector2 GetMouseWheelMoveV(void);
+(defcfn get-mouse-wheel-move-v
+  "Get mouse wheel movement for both X and Y."
+  "GetMouseWheelMoveV" [] ::vector2)
+
+; void SetMouseCursor(int cursor);
+(defcfn set-mouse-cursor
+  "Set mouse cursor."
+  {:arglists '([cursor])}
+  "SetMouseCursor" [::mem/int] ::mem/void)
+
+; // Input-related functions: touch
+; int GetTouchX(void);
+(defcfn get-touch-x
+  "Get touch position X for touch point 0 (relative to screen size)."
+  "GetTouchX" [] ::mem/int)
+
+; int GetTouchY(void);
+(defcfn get-touch-y
+  "Get touch position Y for touch point 0 (relative to screen size)."
+  "GetTouchY" [] ::mem/int)
+
+; Vector2 GetTouchPosition(int index);
+(defcfn get-touch-position
+  "Get touch position XY for a touch point index (relative to screen size)."
+  {:arglists '([index])}
+  "GetTouchPosition" [::mem/int] ::vector2)
+
+; int GetTouchPointId(int index);
+(defcfn get-touch-point-id
+  "Get touch point identifier for given index"
+  {:arglists '([index])}
+  "GetTouchPointId" [::mem/int] ::mem/int)
+
+; int GetTouchPointCount(void);
+(defcfn get-touch-point-count
+  "Get number oftouch points"
+  "GetTouchPointCount" [] ::mem/int)
